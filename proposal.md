@@ -2,14 +2,18 @@
 
 ## Project Descirption
 
-Describe what you're making here...
+Upgrade my first project I did in CS30 to make it an actual pro game but on phone and publish it on playstore and/or applestore.
 
 ## Needs to have list
 
-- thing 1
-- thing 2
+- Be able to display the game and be played on cell phones.
+- Menu, home, and pause and resume buttons.
+- Collect flying down coins.
+- Having rocks flying down that you have to avoid.
 
 ## Nice to have list
 
-- other stuff
-- fixing world issue
+- Levels
+- Faster rocks and aliens falling down.
+- More bullets for short times (Super power).
+- The rocket's gas tank recharges by collecting "fuel" icons falling down on it and if that gas tank was done, the game becomes over. 
