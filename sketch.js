@@ -12,7 +12,7 @@ let spaceCrafty = 0;
 function setup() {
   //setting up background
   bg = loadImage("space shooter background.png");
-  createCanvas(800, 600);
+  createCanvas(1600, 1000);
   spaceCraft = loadImage("Spacecraft.png");
   noCursor(); // hide the cursor
   // showing the enemies
@@ -65,8 +65,8 @@ function draw() {
     let d = dist(enemies.x, enemies.y, x + spacex / 2, 450 + spacey / 2);
     if (d < 50) {
       fill(225); // set the fill color to black
-      text("Game Over!", 320, 60);
-      text("Your score was" + " " + score, 295, 100);
+      text("Game Over!", width/2 - 53, 60);
+      text("Your score was" + " " + score, width/2 - 94, 100);
       score = " ";
       noLoop();
     }
@@ -87,13 +87,14 @@ function draw() {
     }
   }
   fill(225); // set the fill color to white
-  scorePrinting = text(score, 400, 50);
+  scorePrinting = text(score, width/2, 50);
 
+  // Checking the walls for the spacecraft to not go through them
   if (x <= 0) {
     x = 0;
   }
-  if (x >= 675) {
-    x = 675;
+  if (x >= width -  spaceCraft) {
+    x = width;
   }
 }
 
