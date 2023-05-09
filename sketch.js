@@ -35,7 +35,7 @@ function draw() {
   moveCraft();
   stroke(226, 204, 0);
   spaceCraft.resize(spacex, spacey);
-  image(spaceCraft, x, 450);
+  image(spaceCraft, x, height - 150);
   //Here we update and then draw the bullet
   for (let bullet of bullets) {
     bullet.y -= 10;
