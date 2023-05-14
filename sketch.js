@@ -1,6 +1,6 @@
-let x = 350;
-let spacex = 120;
-let spacey = 120;
+let x = 100;
+let spacex = 120; 
+let spacey = 120; 
 let spaceCraft;
 let bullets = [];
 let enemies = [];
@@ -8,49 +8,66 @@ let score = 0;
 let bg;
 let enemyImages = [];
 let enemyTypes = ["flammablerock1", "flammablerock2", "rock1", "rock2", "rock3", "rock4", "moon", "moon2"];
+let highScore = localStorage.getItem('highScore') || 0;
+
 
 function preload() {
   for (let i = 0; i < enemyTypes.length; i++) {
     let img = loadImage(enemyTypes[i] + ".png");
     enemyImages[i] = img;
   }
+  spaceCraft = loadImage("Spacecraft.png");  
 }
 
 class Enemy {
-  constructor(x, y, img) {
+  constructor(x, y, img, enemySize) {
     this.x = x;
     this.y = y;
     this.img = img;
+    this.enemySize = enemySize;
   }
 
   draw() {
-    image(this.img, this.x, this.y, 30, 30);  // Adjust the size here.
+    image(this.img, this.x, this.y, this.enemySize, this.enemySize);
     this.y += 2;
   }
+
   isOffScreen() {
     return this.y > height;
   }
 
   collidesWith(bullet) {
-    return dist(this.x, this.y, bullet.x, bullet.y) < 50;
-  }
-
+    return dist(this.x, this.y, bullet.x, bullet.y) < this.enemySize;
+}
   reset() {
-    this.x = random(30, width - 30);
+    this.x = random(this.enemySize*2, width - this.enemySize*2);
     this.y = random(-1200, 0);
     this.img = random(enemyImages);
+  }
+
+  collidesWithSpacecraft(spacecraftX, spacecraftY, spacecraftWidth, spacecraftHeight) {
+    let buffer = 0.1; // adjust this value to increase or decrease sensitivity
+    if (spacecraftX + buffer < this.x + this.enemySize - buffer &&
+      spacecraftX + spacecraftWidth - buffer > this.x + buffer &&
+      spacecraftY + buffer < this.y + this.enemySize - buffer &&
+      spacecraftHeight + spacecraftY - buffer > this.y + buffer) {
+      // Collision detected
+      return true;
+    }
+    return false;
   }
 }
 
 function setup() {
   bg = loadImage("space shooter background.png");
-  createCanvas(1600, 1000);
-  spaceCraft = loadImage("Spacecraft.png");
-  spaceCraft.resize(spacex, spacey); // resize spacecraft
+  createCanvas(1500, 1000);
+  spaceCraft.resize(spacex, spacey); 
+  x = width/2 - spacex/2;
   noCursor();
 
-  for (let i = 0; i < 50; i++) {
-    let enemy = new Enemy(random(50, width - 50), random(-1200, 0), random(enemyImages));
+  for (let i = 0; i < 20; i++) {
+    let enemySize = map(width, 500, 2000, 20, 50); 
+    let enemy = new Enemy(random(60, width -60), random(-1200, 0), random(enemyImages), 70);
     enemies.push(enemy);
   }
 }
@@ -64,7 +81,7 @@ function draw() {
   rectMode(CENTER);
   moveCraft();
   stroke(226, 204, 0);
-  image(spaceCraft, x, height - 150);
+  image(spaceCraft, x, height - 155);
 
   for (let bullet of bullets) {
     bullet.y -= 10;
@@ -83,15 +100,20 @@ function draw() {
   }
 
   for (let enemy of enemies) {
-    let d = dist(enemy.x, enemy.y, x + spacex / 2, height - spacey / 2);
-    if (d < 50) {
+    if (enemy.collidesWithSpacecraft(x, height - spacey, spacex, spacey)) {
       fill(225);
       text("Game Over!", width/2 - 53, 60);
       text("Your score was" + " " + score, width/2 - 94, 100);
+      if (score > highScore) {
+        highScore = score;
+        localStorage.setItem('highScore', highScore);
+      }
+      text("The highest score is: " + highScore, width/2 - 94, 140);
       score = " ";
       noLoop();
     }
   }
+  
 
   for (let i = enemies.length - 1; i >= 0; i--) {
     for (let j = bullets.length - 1; j >= 0; j--) {
@@ -110,28 +132,28 @@ function draw() {
     x = 0;
   }
   
-  if (x >= width - spacex) { // change the limit to account for the size of the spacecraft
+  if (x >= width - spacex) {
     x = width - spacex;
   }
+}
+
+function moveCraft() {
+  if (keyIsDown(68)) { //d
+    x += 5;
   }
-  
-  function moveCraft() {
-    if (keyIsDown(68)) { //d
-      x += 5;
-    }
-  
-    if (keyIsDown(65)) { //a
-      x -= 5;
-    }
+
+  if (keyIsDown(65)) { //a
+    x -= 5;
   }
-  
-  function mousePressed() {
-    let bulletx = x + spacex / 2;
-    let bullety = height - spacey; // update to match the bottom of the spacecraft
-    let bullet = {
-      x: bulletx,
-      y: bullety,
-    };
-    bullets.push(bullet);
-  }
-  
+}
+
+function mousePressed() {
+  let bulletx = x + spacex / 2;
+  let bullety = height - spacey;
+  let bullet = {
+    x: bulletx,
+    y: bullety,
+  };
+  bullets.push(bullet);
+}
+
