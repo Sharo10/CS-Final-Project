@@ -17,6 +17,7 @@ function preload() {
     enemyImages[i] = img;
   }
   spaceCraft = loadImage("Spacecraft.png");  
+  bullet = loadImage("bullet1.png");
 }
 
 class Enemy {
@@ -85,8 +86,7 @@ function draw() {
 
   for (let bullet of bullets) {
     bullet.y -= 10;
-    fill(0, 255, 0);
-    circle(bullet.x, bullet.y, 10);
+    image(bullet, bullet.x, bullet.y, 10)
     if (bullet.y < 0) {
       bullets.splice(bullets.indexOf(bullet), 1);
     }
