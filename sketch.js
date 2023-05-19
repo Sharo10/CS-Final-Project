@@ -9,6 +9,9 @@ let bg;
 let enemyImages = [];
 let enemyTypes = ["flammablerock1", "flammablerock2", "rock1", "rock2", "rock3", "rock4", "moon", "moon2"];
 let highScore = localStorage.getItem('highScore') || 0;
+let bulletImage; // renamed to prevent variable name clash
+let playButton;
+
 
 
 function preload() {
@@ -16,8 +19,8 @@ function preload() {
     let img = loadImage(enemyTypes[i] + ".png");
     enemyImages[i] = img;
   }
-  spaceCraft = loadImage("Spacecraft.png");  
-  bullet = loadImage("bullet1.png");
+  spaceCraft = loadImage("Spacecraft.png");
+  bulletImage = loadImage("bullet2.png"); // renamed to bulletImage
 }
 
 class Enemy {
@@ -47,16 +50,32 @@ class Enemy {
   }
 
   collidesWithSpacecraft(spacecraftX, spacecraftY, spacecraftWidth, spacecraftHeight) {
-    let buffer = 0.1; // adjust this value to increase or decrease sensitivity
-    if (spacecraftX + buffer < this.x + this.enemySize - buffer &&
-      spacecraftX + spacecraftWidth - buffer > this.x + buffer &&
-      spacecraftY + buffer < this.y + this.enemySize - buffer &&
-      spacecraftHeight + spacecraftY - buffer > this.y + buffer) {
-      // Collision detected
-      return true;
-    }
-    return false;
+    // adjust these to change the size and position of the "collision boxes"
+    let tipBoxHeight = spacecraftHeight / 4;  
+    let tipBoxWidth = spacecraftWidth / 2;
+    let tipBoxX = spacecraftX + spacecraftWidth / 4;
+    let tipBoxY = spacecraftY;
+  
+    let wingBoxHeight = spacecraftHeight / 2;
+    let wingBoxWidth = spacecraftWidth;
+    let wingBoxX = spacecraftX;
+    let wingBoxY = spacecraftY + tipBoxHeight;
+  
+    let collidesWithTip = tipBoxX < this.x + this.enemySize &&
+      tipBoxX + tipBoxWidth > this.x &&
+      tipBoxY < this.y + this.enemySize &&
+      tipBoxY + tipBoxHeight > this.y;
+  
+    let collidesWithWings = wingBoxX < this.x + this.enemySize &&
+      wingBoxX + wingBoxWidth > this.x &&
+      wingBoxY < this.y + this.enemySize &&
+      wingBoxY + wingBoxHeight > this.y;
+  
+    return collidesWithTip || collidesWithWings;
   }
+  
+  
+  
 }
 
 function setup() {
@@ -71,6 +90,21 @@ function setup() {
     let enemy = new Enemy(random(60, width -60), random(-1200, 0), random(enemyImages), 70);
     enemies.push(enemy);
   }
+
+  playButton = createButton('Play/Resume');
+  playButton.position(50, 50);
+  playButton.mousePressed(toggleGamePlay);
+}
+
+let gamePaused = false;
+function toggleGamePlay() {
+  gamePaused = !gamePaused;
+  if(gamePaused){
+    noLoop();
+  } else {
+    loop();
+  }
+
 }
 
 function draw() {
@@ -84,9 +118,13 @@ function draw() {
   stroke(226, 204, 0);
   image(spaceCraft, x, height - 155);
 
+  if(gamePaused){
+    return;
+  }
+
   for (let bullet of bullets) {
     bullet.y -= 10;
-    image(bullet, bullet.x, bullet.y, 10)
+    image(bulletImage, bullet.x, bullet.y, 10) // renamed to bulletImage
     if (bullet.y < 0) {
       bullets.splice(bullets.indexOf(bullet), 1);
     }
@@ -148,8 +186,8 @@ function moveCraft() {
 }
 
 function mousePressed() {
-  let bulletx = x + spacex / 2;
-  let bullety = height - spacey;
+  let bulletx = x + spacex / 2 - 5; // To align with the center of the spacecraft horizontally
+  let bullety = height - spacey - 157; // Set the bullet's y-position to be at the spacecraft's y-position
   let bullet = {
     x: bulletx,
     y: bullety,

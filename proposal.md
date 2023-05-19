@@ -2,7 +2,7 @@
 
 ## Project Descirption
 
-Upgrade my first project I did in CS30 to make it an actual pro game but on phone and publish it on playstore and/or applestore.
+Upgrade my first project I did in CS30 to make it more fun and a more professional game
 
 ## Needs to have list
 
@@ -10,6 +10,9 @@ Upgrade my first project I did in CS30 to make it an actual pro game but on phon
 - Menu, home, and pause and resume buttons.
 - Collect flying down coins.
 - Having rocks flying down that you have to avoid.
+- Highest score display
+- More enemies
+- 
 
 ## Nice to have list
 
