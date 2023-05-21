@@ -7,7 +7,7 @@ let enemies = [];
 let score = 0;
 let bg;
 let enemyImages = [];
-let enemyTypes = ["flammablerock1", "flammablerock2", "rock1", "rock2", "rock3", "rock4", "moon", "moon2"];
+let enemyTypes = ["flammablerock1", "rock1", "rock2", "rock3", "rock4", "moon", "moon2"];
 let highScore = localStorage.getItem('highScore') || 0;
 let bulletImage; // renamed to prevent variable name clash
 let playButton;
@@ -24,11 +24,14 @@ function preload() {
 }
 
 class Enemy {
-  constructor(x, y, img, enemySize) {
+  constructor(x, y, img, enemySize, enemyType) {  // Add a new parameter for enemy type
     this.x = x;
     this.y = y;
     this.img = img;
     this.enemySize = enemySize;
+    this.type = enemyType;  // Store the enemy type
+    this.width = enemySize;
+    this.height = enemySize;
   }
 
   draw() {
@@ -87,10 +90,11 @@ function setup() {
 
   for (let i = 0; i < 20; i++) {
     let enemySize = map(width, 500, 2000, 20, 50); 
-    let enemy = new Enemy(random(60, width -60), random(-1200, 0), random(enemyImages), 70);
+    let enemyType = random(enemyTypes);
+    let enemy = new Enemy(random(60, width -60), random(-1200, 0), loadImage(enemyType + ".png"), 70, enemyType);
     enemies.push(enemy);
   }
-
+  
   playButton = createButton('Play/Resume');
   playButton.position(50, 50);
   playButton.mousePressed(toggleGamePlay);
@@ -156,12 +160,15 @@ function draw() {
   for (let i = enemies.length - 1; i >= 0; i--) {
     for (let j = bullets.length - 1; j >= 0; j--) {
       if (enemies[i].collidesWith(bullets[j])) {
-        enemies[i].reset();
-        bullets.splice(j, 1);
-        score++;
+        if (enemies[i].type !== 'rock1' && enemies[i].type !== 'rock2' && enemies[i].type !== 'rock3' && enemies[i].type !== 'rock4') {
+          enemies[i].reset();
+          bullets.splice(j, 1);
+          score++;
+        }
       }
     }
   }
+  
   
   fill(225);
   text(score, width/2, 50);
@@ -191,7 +198,20 @@ function mousePressed() {
   let bullet = {
     x: bulletx,
     y: bullety,
+    size: 10,
   };
   bullets.push(bullet);
 }
 
+
+function keyPressed() {
+  if (keyCode === 32) { // 32 is the ASCII code for the space bar
+    let bulletx = x + spacex / 2 - 5; // To align with the center of the spacecraft horizontally
+    let bullety = height - spacey - 157; // Set the bullet's y-position to be at the spacecraft's y-position
+    let bullet = {
+      x: bulletx,
+      y: bullety,
+    };
+    bullets.push(bullet);
+  }
+}
