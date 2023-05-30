@@ -7,10 +7,10 @@ let enemies = [];
 let score = 0;
 let bg;
 let enemyImages = [];
-let enemyTypes = ["flammablerock1", "rock1", "rock2", "rock3", "rock4", "moon", "moon2"];
+let enemyTypes = ["flammablerock1", "rock1", "rock2", "moon", "moon2"];
 let highScore = localStorage.getItem('highScore') || 0;
-let bulletImage; // renamed to prevent variable name clash
-let playButton;
+let bulletImage; 
+let gamePaused = false; 
 
 
 
@@ -32,6 +32,16 @@ class Enemy {
     this.type = enemyType;  // Store the enemy type
     this.width = enemySize;
     this.height = enemySize;
+  }
+
+  saveState() {
+    return {
+      x: this.x,
+      y: this.y,
+      enemySize: this.enemySize,
+      img: this.img,
+      type: this.type,
+    };
   }
 
   draw() {
@@ -94,22 +104,28 @@ function setup() {
     let enemy = new Enemy(random(60, width -60), random(-1200, 0), loadImage(enemyType + ".png"), 70, enemyType);
     enemies.push(enemy);
   }
-  
-  playButton = createButton('Play/Resume');
-  playButton.position(50, 50);
-  playButton.mousePressed(toggleGamePlay);
 }
 
-let gamePaused = false;
+let savedStateEnemies, savedStateBullets;
+
 function toggleGamePlay() {
   gamePaused = !gamePaused;
-  if(gamePaused){
+  if (gamePaused) {
     noLoop();
+    savedStateEnemies = enemies.map(enemy => enemy.saveState());
+    savedStateBullets = bullets.map(bullet => bullet.saveState());
   } else {
     loop();
+    for (let i = 0; i < enemies.length; i++) {
+      Object.assign(enemies[i], savedStateEnemies[i]);
+    }
+    for (let i = 0; i < bullets.length; i++) {
+      Object.assign(bullets[i], savedStateBullets[i]);
+    }
   }
-
 }
+
+
 
 function draw() {
   textSize(28);
@@ -183,6 +199,10 @@ function draw() {
 }
 
 function moveCraft() {
+  if(gamePaused){
+    return;
+  }
+
   if (keyIsDown(68)) { //d
     x += 5;
   }
@@ -191,6 +211,29 @@ function moveCraft() {
     x -= 5;
   }
 }
+
+function mousePressed() {
+  if(gamePaused){
+    return;
+  }
+
+  let bulletx = x + spacex / 2 - 5; // To align with the center of the spacecraft horizontally
+  let bullety = height - spacey - 157; // Set the bullet's y-position to be at the spacecraft's y-position
+  let bullet = {
+    x: bulletx,
+    y: bullety,
+    size: 10,
+    saveState: function() {
+      return {
+        x: this.x,
+        y: this.y,
+        size: this.size
+      };
+    }
+  };
+}
+  
+
 
 function mousePressed() {
   let bulletx = x + spacex / 2 - 5; // To align with the center of the spacecraft horizontally
@@ -205,13 +248,18 @@ function mousePressed() {
 
 
 function keyPressed() {
-  if (keyCode === 32) { // 32 is the ASCII code for the space bar
+  if (keyCode === 32) { // the number 32 refers to the ASCII code for the space bar
     let bulletx = x + spacex / 2 - 5; // To align with the center of the spacecraft horizontally
     let bullety = height - spacey - 157; // Set the bullet's y-position to be at the spacecraft's y-position
     let bullet = {
       x: bulletx,
       y: bullety,
+      size: 10,
     };
     bullets.push(bullet);
+  } 
+  else if (keyCode === 27) {
+    toggleGamePlay();
   }
 }
+
