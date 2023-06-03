@@ -2,12 +2,12 @@
 
 ## Project Descirption
 
-Upgrade my first project I did in CS30 to make it more fun and a more professional game
+Upgrade my first project I did in CS30 to make it a bit more fun by adding some new features. 
 
 ## Needs to have list
 
 - Be able to display the game and be played on cell phones.
-- Menu, home, and pause and resume buttons.
+- Pause and resume buttons.
 - Collect flying down coins.
 - Having rocks flying down that you have to avoid.
 - Highest score display

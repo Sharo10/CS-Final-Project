@@ -11,6 +11,11 @@ let enemyTypes = ["flammablerock1", "rock1", "rock2", "moon", "moon2"];
 let highScore = localStorage.getItem('highScore') || 0;
 let bulletImage; 
 let gamePaused = false; 
+let coinImage;
+let coins = [];
+let savedStateCoins;
+let coinsCollected = 0;
+
 
 
 
@@ -21,6 +26,7 @@ function preload() {
   }
   spaceCraft = loadImage("Spacecraft.png");
   bulletImage = loadImage("bullet2.png"); // renamed to bulletImage
+  coinImage = loadImage("coin1.png");
 }
 
 class Enemy {
@@ -85,11 +91,49 @@ class Enemy {
       wingBoxY + wingBoxHeight > this.y;
   
     return collidesWithTip || collidesWithWings;
+  }  
+}
+
+
+
+class Coin {
+  constructor(x, y, img, coinSize) {
+    this.x = x;
+    this.y = y;
+    this.img = img;
+    this.coinSize = coinSize;
+    this.width = coinSize;
+    this.height = coinSize;
+  }
+
+  saveState() {
+    return {
+      x: this.x,
+      y: this.y,
+      coinSize: this.coinSize,
+      img: this.img
+    };
+  }
+
+  draw() {
+    image(this.img, this.x, this.y, this.coinSize, this.coinSize);
+    this.y += 2;
+  }
+
+  isOffScreen() {
+    return this.y > height;
+  }
+
+  collidesWith(bullet) {
+    return dist(this.x, this.y, bullet.x, bullet.y) < this.coinSize;
   }
   
-  
-  
+  reset() {
+    this.x = random(this.coinSize*2, width - this.coinSize*2);
+    this.y = random(-1200, 0);
+  }
 }
+
 
 function setup() {
   bg = loadImage("space shooter background.png");
@@ -98,11 +142,16 @@ function setup() {
   x = width/2 - spacex/2;
   noCursor();
 
-  for (let i = 0; i < 20; i++) {
+  for (let i = 0; i < 10; i++) {
     let enemySize = map(width, 500, 2000, 20, 50); 
     let enemyType = random(enemyTypes);
     let enemy = new Enemy(random(60, width -60), random(-1200, 0), loadImage(enemyType + ".png"), 70, enemyType);
     enemies.push(enemy);
+  }
+  for (let i = 0; i < 7; i++) {
+    let coinSize = 80
+    let coin = new Coin(random(60, width -60), random(-1200, 0), coinImage, coinSize);
+    coins.push(coin);
   }
 }
 
@@ -114,6 +163,7 @@ function toggleGamePlay() {
     noLoop();
     savedStateEnemies = enemies.map(enemy => enemy.saveState());
     savedStateBullets = bullets.map(bullet => bullet.saveState());
+    savedStateCoins = coins.map(coin => coin.saveState());
   } else {
     loop();
     for (let i = 0; i < enemies.length; i++) {
@@ -121,6 +171,9 @@ function toggleGamePlay() {
     }
     for (let i = 0; i < bullets.length; i++) {
       Object.assign(bullets[i], savedStateBullets[i]);
+    }
+    for (let i = 0; i < coins.length; i++) {
+      Object.assign(coins[i], savedStateCoins[i]);
     }
   }
 }
@@ -140,6 +193,7 @@ function draw() {
 
   if(gamePaused){
     return;
+    
   }
 
   for (let bullet of bullets) {
@@ -150,10 +204,27 @@ function draw() {
     }
   }
 
+  for (let coin of coins) {
+    coin.draw();
+    if (coin.isOffScreen()) {
+      coin.reset();
+    }
+  }
+
   for (let i = enemies.length - 1; i >= 0; i--) {
     enemies[i].draw();
     if (enemies[i].isOffScreen()) {
       enemies[i].reset();
+    }
+  }
+
+  for (let i = coins.length - 1; i >= 0; i--) {
+    for (let j = bullets.length - 1; j >= 0; j--) {
+      if (coins[i].collidesWith(bullets[j])) {
+        coins[i].reset();
+        bullets.splice(j, 1);
+        coinsCollected++;
+      }
     }
   }
 
@@ -172,6 +243,11 @@ function draw() {
     }
   }
   
+  // Drawing the coin counter
+  image(coinImage, width - 103, 9, 60, 60);
+  fill(225);
+  text(coinsCollected, width - 50, 48);
+
 
   for (let i = enemies.length - 1; i >= 0; i--) {
     for (let j = bullets.length - 1; j >= 0; j--) {
