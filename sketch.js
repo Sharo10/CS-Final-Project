@@ -69,7 +69,6 @@ class Enemy {
   }
 
   collidesWithSpacecraft(spacecraftX, spacecraftY, spacecraftWidth, spacecraftHeight) {
-    // adjust these to change the size and position of the "collision boxes"
     let tipBoxHeight = spacecraftHeight / 4;  
     let tipBoxWidth = spacecraftWidth / 2;
     let tipBoxX = spacecraftX + spacecraftWidth / 4;
@@ -310,7 +309,7 @@ function mousePressed() {
 }
   
 
-
+// A function for detecting mouse clicks to shoot bullets out of the space craft
 function mousePressed() {
   let bulletx = x + spacex / 2 - 5; // To align with the center of the spacecraft horizontally
   let bullety = height - spacey - 157; // Set the bullet's y-position to be at the spacecraft's y-position
@@ -322,7 +321,7 @@ function mousePressed() {
   bullets.push(bullet);
 }
 
-
+// A function for detecting space bar presses to shoot bullets out of the space craft
 function keyPressed() {
   if (keyCode === 32) { // the number 32 refers to the ASCII code for the space bar
     let bulletx = x + spacex / 2 - 5; // To align with the center of the spacecraft horizontally
