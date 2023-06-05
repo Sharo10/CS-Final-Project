@@ -7,7 +7,7 @@ let enemies = [];
 let score = 0;
 let bg;
 let enemyImages = [];
-let enemyTypes = ["flammablerock1", "rock1", "rock2", "moon", "moon2"];
+let enemyTypes = ["rock1", "rock2", "moon", "moon2", "purpleEnemy"];
 let highScore = localStorage.getItem('highScore') || 0;
 let bulletImage; 
 let gamePaused = false; 
