@@ -5,17 +5,17 @@
 Upgrade my first project I did in CS30 to make it a bit more fun by adding some new features. 
 
 ## Needs to have list
-
-- Be able to display the game and be played on cell phones.
+- Freedom of controls (Interactive).
 - Pause and resume buttons.
-- Collect flying down coins.
+- Collect flying down coins (2 ways to do so).
+- Coins score display.
 - Having rocks flying down that you have to avoid.
-- Highest score display
-- More enemies
+- Highest score display.
+- Variety of enemies.
 
 
 ## Nice to have list
-
+- Be able to display the game and be played on cell phones.
 - Faster rocks and aliens falling down.
-- More bullets for short times (Super power).
-- The rocket's gas tank recharges by collecting "fuel" icons falling down on it and if that gas tank was done, the game becomes over. 
+- More bullets for short time (Super power).
+- The rocket's gas tank recharges by collecting "fuel" icons falling down on it and if that gas tank was done, the game stops. 

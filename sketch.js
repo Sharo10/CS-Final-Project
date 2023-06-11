@@ -7,7 +7,7 @@ let enemies = [];
 let score = 0;
 let bg;
 let enemyImages = [];
-let enemyTypes = ["rock1", "rock2", "moon", "moon2", "purpleEnemy"];
+let enemyTypes = ["rock1", "rock2", "moon", "moon2", "purpleEnemy", "spaceShip"];
 let highScore = localStorage.getItem('highScore') || 0;
 let bulletImage; 
 let gamePaused = false; 
@@ -131,6 +131,15 @@ class Coin {
     this.x = random(this.coinSize*2, width - this.coinSize*2);
     this.y = random(-1200, 0);
   }
+
+  collidesWithSpacecraft(spacecraftX, spacecraftY, spacecraftWidth, spacecraftHeight) {
+    return (
+      this.x < spacecraftX + spacecraftWidth &&
+      this.x + this.coinSize > spacecraftX &&
+      this.y < spacecraftY + spacecraftHeight &&
+      this.y + this.coinSize > spacecraftY
+    );
+  }
 }
 
 
@@ -217,6 +226,7 @@ function draw() {
     }
   }
 
+  // Bullet collisions with coins
   for (let i = coins.length - 1; i >= 0; i--) {
     for (let j = bullets.length - 1; j >= 0; j--) {
       if (coins[i].collidesWith(bullets[j])) {
@@ -226,6 +236,16 @@ function draw() {
       }
     }
   }
+
+
+  // Coins collision with spacecraft
+  for (let i = coins.length - 1; i >= 0; i--) {
+    if (coins[i].collidesWithSpacecraft(x, height - spacey, spacex, spacey)) {
+      coins[i].reset();
+      coinsCollected++;
+    }
+  }
+
 
   for (let enemy of enemies) {
     if (enemy.collidesWithSpacecraft(x, height - spacey, spacex, spacey)) {
@@ -248,17 +268,22 @@ function draw() {
   text(coinsCollected, width - 50, 48);
 
 
-  for (let i = enemies.length - 1; i >= 0; i--) {
-    for (let j = bullets.length - 1; j >= 0; j--) {
-      if (enemies[i].collidesWith(bullets[j])) {
-        if (enemies[i].type !== 'rock1' && enemies[i].type !== 'rock2' && enemies[i].type !== 'rock3' && enemies[i].type !== 'rock4') {
-          enemies[i].reset();
-          bullets.splice(j, 1);
-          score++;
-        }
+  // Bullet collisions with enemies
+for (let i = enemies.length - 1; i >= 0; i--) {
+  for (let j = bullets.length - 1; j >= 0; j--) {
+    if (enemies[i].collidesWith(bullets[j])) {
+      // Skip if the enemy is of type 'rock1' or 'rock2'
+      if (enemies[i].type !== 'rock1' && enemies[i].type !== 'rock2') {
+        enemies[i].reset();
+        bullets.splice(j, 1);
+        score++;
+      } else if (enemies[i].type === 'rock1' || enemies[i].type === 'rock2') {
+        // Remove the bullet but don't reset the rock
+        bullets.splice(j, 1);
       }
     }
   }
+}
   
   
   fill(225);
@@ -278,11 +303,11 @@ function moveCraft() {
     return;
   }
 
-  if (keyIsDown(68)) { //d
+  if (keyIsDown(68) || keyIsDown(39)) { //d or right arrow
     x += 5;
   }
 
-  if (keyIsDown(65)) { //a
+  if (keyIsDown(65) || keyIsDown(37)) { //a or left arrow
     x -= 5;
   }
 }
