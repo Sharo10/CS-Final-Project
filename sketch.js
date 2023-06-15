@@ -7,35 +7,36 @@ let enemies = [];
 let score = 0;
 let bg;
 let enemyImages = [];
-let enemyTypes = ["rock1", "rock2", "moon2", "purpleEnemy", "spaceShip", "spaceShip2", "spaceRocket"];
+let enemyTypes = ["rock1", "rock2", "purpleEnemy", "spaceShip", "spaceShip2", "spaceRocket", "spaceCraft1", "spaceCraft2", "spaceCraft3"];
 let highScore = localStorage.getItem('highScore') || 0;
 let bulletImage; 
 let gamePaused = false; 
 let coinImage;
 let coins = [];
-let savedStateCoins;
 let coinsCollected = 0;
+let enemySizes = [70, 70, 60, 100, 75, 90, 120, 140, 120];
 
 
 
 
 function preload() {
   for (let i = 0; i < enemyTypes.length; i++) {
-    let img = loadImage(enemyTypes[i] + ".png");
+    let img = loadImage("Tools/" + enemyTypes[i] + ".png");
     enemyImages[i] = img;
   }
-  spaceCraft = loadImage("Spacecraft.png");
-  bulletImage = loadImage("bullet2.png"); // renamed to bulletImage
-  coinImage = loadImage("coin1.png");
+  spaceCraft = loadImage("Tools/Spacecraft.png");
+  bulletImage = loadImage("Tools/bullet2.png");
+  coinImage = loadImage("Tools/coin1.png");
 }
 
+
 class Enemy {
-  constructor(x, y, img, enemySize, enemyType) {  // Add a new parameter for enemy type
+  constructor(x, y, img, enemySize, enemyType) {
     this.x = x;
     this.y = y;
     this.img = img;
     this.enemySize = enemySize;
-    this.type = enemyType;  // Store the enemy type
+    this.type = enemyType;
     this.width = enemySize;
     this.height = enemySize;
   }
@@ -60,37 +61,43 @@ class Enemy {
   }
 
   collidesWith(bullet) {
-    return dist(this.x, this.y, bullet.x, bullet.y) < this.enemySize;
-}
-  reset() {
-    this.x = random(this.enemySize*2, width - this.enemySize*2);
-    this.y = random(-1200, 0);
-    this.img = random(enemyImages);
+    return dist(this.x, this.y, bullet.x, bullet.y) < this.enemySize-5;
   }
 
-  collidesWithSpacecraft(spacecraftX, spacecraftY, spacecraftWidth, spacecraftHeight) {
-    let tipBoxHeight = spacecraftHeight / 4;  
-    let tipBoxWidth = spacecraftWidth / 2;
-    let tipBoxX = spacecraftX + spacecraftWidth / 4;
-    let tipBoxY = spacecraftY;
+  reset() {
+    this.x = random(this.enemySize/2, width - this.enemySize*2);
+    this.y = random(-1200, 0);
+}
   
-    let wingBoxHeight = spacecraftHeight / 2;
-    let wingBoxWidth = spacecraftWidth;
-    let wingBoxX = spacecraftX;
-    let wingBoxY = spacecraftY + tipBoxHeight;
-  
-    let collidesWithTip = tipBoxX < this.x + this.enemySize &&
-      tipBoxX + tipBoxWidth > this.x &&
-      tipBoxY < this.y + this.enemySize &&
-      tipBoxY + tipBoxHeight > this.y;
-  
-    let collidesWithWings = wingBoxX < this.x + this.enemySize &&
-      wingBoxX + wingBoxWidth > this.x &&
-      wingBoxY < this.y + this.enemySize &&
-      wingBoxY + wingBoxHeight > this.y;
-  
-    return collidesWithTip || collidesWithWings;
-  }  
+
+collidesWithSpacecraft(spacecraftX, spacecraftY, spacecraftWidth, spacecraftHeight) {
+  // Define the hitbox of the spacecraft's tip
+  let tipBoxHeight = spacecraftHeight / 4;  // The height is a quarter of the spacecraft's height
+  let tipBoxWidth = spacecraftWidth / 2;  // The width is half of the spacecraft's width
+  let tipBoxX = spacecraftX + spacecraftWidth / 4;  // The X position is a quarter of the spacecraft's width from the left edge
+  let tipBoxY = spacecraftY;  // The Y position is the same as the spacecraft's Y position
+
+  // Define the hitbox of the spacecraft's wings
+  let wingBoxHeight = spacecraftHeight / 2;  // The height is half of the spacecraft's height
+  let wingBoxWidth = spacecraftWidth;  // The width is the same as the spacecraft's width
+  let wingBoxX = spacecraftX;  // The X position is the same as the spacecraft's X position
+  let wingBoxY = spacecraftY + tipBoxHeight;  // The Y position is the same as the bottom edge of the tip's hitbox
+
+  // Check whether the enemy's position collides with the tip's hitbox
+  let collidesWithTip = tipBoxX < this.x + this.enemySize &&
+    tipBoxX + tipBoxWidth > this.x &&
+    tipBoxY < this.y + this.enemySize/2 &&  // Subtract half of enemy size
+    tipBoxY + tipBoxHeight > this.y;
+
+  // Check whether the enemy's position collides with the wings' hitbox
+  let collidesWithWings = wingBoxX < this.x + this.enemySize &&
+    wingBoxX + wingBoxWidth > this.x &&
+    wingBoxY < this.y + this.enemySize/2 &&  // Subtract half of enemy size
+    wingBoxY + wingBoxHeight > this.y;
+
+  // Return true if the enemy collides with either the tip's hitbox or the wings' hitbox, and false otherwise
+  return collidesWithTip || collidesWithWings;
+}
 }
 
 
@@ -144,46 +151,67 @@ class Coin {
 
 
 function setup() {
-  bg = loadImage("space shooter background.png");
+  bg = loadImage("Tools/space shooter background.png");
   createCanvas(1500, 1000);
   spaceCraft.resize(spacex, spacey); 
   x = width/2 - spacex/2;
   noCursor();
 
-  for (let i = 0; i < 10; i++) {
-    let enemySize = map(width, 500, 2000, 20, 50); 
-    let enemyType = random(enemyTypes);
-    let enemy = new Enemy(random(60, width -60), random(-1200, 0), loadImage(enemyType + ".png"), 70, enemyType);
+  //Spawning or pushing the enemies
+  for (let i = 0; i < enemyTypes.length; i++) {
+    let enemySize = enemySizes[i]; // Get size from enemySizes array
+    let enemyType = enemyTypes[i]; // Get type from enemyTypes array
+    let enemy = new Enemy(random(60, width -60), random(-1200, 0), loadImage("Tools/" + enemyType + ".png"), enemySize, enemyType);
     enemies.push(enemy);
   }
-  for (let i = 0; i < 7; i++) {
+
+  //Initializing or spawning coins
+  for (let i = 0; i < 5; i++) {
     let coinSize = 80
     let coin = new Coin(random(60, width -60), random(-1200, 0), coinImage, coinSize);
     coins.push(coin);
   }
 }
 
-let savedStateEnemies, savedStateBullets;
+// Define variables to store the state of the enemies and bullets when the game is paused.
+let savedStateEnemies, savedStateBullets, savedStateCoins;
 
 function toggleGamePlay() {
+  // Toggle the gamePaused state
   gamePaused = !gamePaused;
+  
+  // If the game is paused
   if (gamePaused) {
+    // Stop the p5.js draw loop
     noLoop();
+    
+    // Save the current state of each enemy in an array
     savedStateEnemies = enemies.map(enemy => enemy.saveState());
+    
+    // Save the current state of each bullet in an array
     savedStateBullets = bullets.map(bullet => bullet.saveState());
+    
+    // Save the current state of each coin in an array
     savedStateCoins = coins.map(coin => coin.saveState());
   } else {
+    // If the game is unpaused, restart the p5.js draw loop
     loop();
+    
+    // Restore the state of each enemy from the saved states
     for (let i = 0; i < enemies.length; i++) {
       Object.assign(enemies[i], savedStateEnemies[i]);
     }
+    
+    // Restore the state of each bullet from the saved states
     for (let i = 0; i < bullets.length; i++) {
       Object.assign(bullets[i], savedStateBullets[i]);
     }
+    
+    // Restore the state of each coin from the saved states
     for (let i = 0; i < coins.length; i++) {
       Object.assign(coins[i], savedStateCoins[i]);
     }
-  }
+}
 }
 
 
@@ -204,14 +232,16 @@ function draw() {
     
   }
 
+  //Spawning bullets
   for (let bullet of bullets) {
     bullet.y -= 10;
-    image(bulletImage, bullet.x, bullet.y, 10) // renamed to bulletImage
+    image(bulletImage, bullet.x, bullet.y, 10)
     if (bullet.y < 0) {
       bullets.splice(bullets.indexOf(bullet), 1);
     }
   }
 
+  //Updating the coins' positions
   for (let coin of coins) {
     coin.draw();
     if (coin.isOffScreen()) {
@@ -219,6 +249,7 @@ function draw() {
     }
   }
 
+  //Managing the enemies' presence and position in the game
   for (let i = enemies.length - 1; i >= 0; i--) {
     enemies[i].draw();
     if (enemies[i].isOffScreen()) {
@@ -246,7 +277,7 @@ function draw() {
     }
   }
 
-
+  //Manages score and enemies collisions with spaceCraft
   for (let enemy of enemies) {
     if (enemy.collidesWithSpacecraft(x, height - spacey, spacex, spacey)) {
       fill(225);
@@ -284,6 +315,7 @@ for (let i = enemies.length - 1; i >= 0; i--) {
     }
   }
 }
+
   
   
   fill(225);
@@ -298,6 +330,7 @@ for (let i = enemies.length - 1; i >= 0; i--) {
   }
 }
 
+//The controls of the spacecraft and moving it horizontally
 function moveCraft() {
   if(gamePaused){
     return;
@@ -312,13 +345,11 @@ function moveCraft() {
   }
 }
 
-function mousePressed() {
-  if(gamePaused){
-    return;
-  }
 
-  let bulletx = x + spacex / 2 - 5; // To align with the center of the spacecraft horizontally
-  let bullety = height - spacey - 157; // Set the bullet's y-position to be at the spacecraft's y-position
+//For firing the bullets out of the tip of the spacecraft
+function mousePressed() {
+  let bulletx = x + spacex / 2 - 5;  // To align with the center of the spacecraft horizontally
+  let bullety = height - spacey - 157;  // Set the bullet's y-position to be at the spacecraft's y-position
   let bullet = {
     x: bulletx,
     y: bullety,
@@ -331,22 +362,11 @@ function mousePressed() {
       };
     }
   };
-}
-  
-
-// A function for detecting mouse clicks to shoot bullets out of the space craft
-function mousePressed() {
-  let bulletx = x + spacex / 2 - 5; // To align with the center of the spacecraft horizontally
-  let bullety = height - spacey - 157; // Set the bullet's y-position to be at the spacecraft's y-position
-  let bullet = {
-    x: bulletx,
-    y: bullety,
-    size: 10,
-  };
   bullets.push(bullet);
 }
 
-// A function for detecting space bar presses to shoot bullets out of the space craft
+
+//Deals with all keys orders (pausin/resuming, refreshing, firing bullets)
 function keyPressed() {
   if (keyCode === 32) { // the number 32 refers to the ASCII code for the space bar
     let bulletx = x + spacex / 2 - 5; // To align with the center of the spacecraft horizontally
@@ -358,8 +378,13 @@ function keyPressed() {
     };
     bullets.push(bullet);
   } 
-  else if (keyCode === 27) {
+  else if (keyCode === 27) { // the number 27 refers to the ASCII code for the ESC button
     toggleGamePlay();
   }
+  else if (key === 'r' || key === 'R') { // the 'r' or 'R' key for refresh
+    window.location.reload();
+  }
 }
+
+
 

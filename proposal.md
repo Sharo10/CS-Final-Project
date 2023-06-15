@@ -7,11 +7,12 @@ Upgrade my first project I did in CS30 to make it a bit more fun by adding some 
 ## Needs to have list
 - Freedom of controls (Interactive).
 - Pause and resume buttons.
+- Refresh or play again button.
 - Collect flying down coins (2 ways to do so).
 - Coins score display.
 - Having rocks flying down that you have to avoid.
 - Highest score display.
-- Variety of enemies.
+- Variety of different enemies (Types and sizes).
 
 
 ## Nice to have list
