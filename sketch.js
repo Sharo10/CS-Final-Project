@@ -1,24 +1,34 @@
+// Game variables
 let x = 100;
 let spacex = 120; 
 let spacey = 120; 
-let spaceCraft;
 let bullets = [];
 let enemies = [];
+let coins = [];
 let score = 0;
-let bg;
+let coinsCollected = 0;
+let gamePaused = false;
+let gameOver = false;
+
+
+// Image variables
+let spaceCraft;
+let bulletImage; 
+let coinImage;
 let enemyImages = [];
 let enemyTypes = ["rock1", "rock2", "purpleEnemy", "spaceShip", "spaceShip2", "spaceRocket", "spaceCraft1", "spaceCraft2", "spaceCraft3"];
-let highScore = localStorage.getItem('highScore') || 0;
-let bulletImage; 
-let gamePaused = false; 
-let coinImage;
-let coins = [];
-let coinsCollected = 0;
 let enemySizes = [70, 70, 60, 100, 75, 90, 120, 140, 120];
+let bg;
 
 
+// Score management
+let highScore = localStorage.getItem('highScore') || 0;
+
+// Saved game states
+let savedStateEnemies, savedStateBullets, savedStateCoins;
 
 
+// Preload function for loading images before the game starts
 function preload() {
   for (let i = 0; i < enemyTypes.length; i++) {
     let img = loadImage("Tools/" + enemyTypes[i] + ".png");
@@ -27,9 +37,11 @@ function preload() {
   spaceCraft = loadImage("Tools/Spacecraft.png");
   bulletImage = loadImage("Tools/bullet2.png");
   coinImage = loadImage("Tools/coin1.png");
+  bg = loadImage("Tools/space shooter background.png");
 }
 
 
+//The enemies' class
 class Enemy {
   constructor(x, y, img, enemySize, enemyType) {
     this.x = x;
@@ -101,7 +113,7 @@ collidesWithSpacecraft(spacecraftX, spacecraftY, spacecraftWidth, spacecraftHeig
 }
 
 
-
+//The coins' class
 class Coin {
   constructor(x, y, img, coinSize) {
     this.x = x;
@@ -150,22 +162,23 @@ class Coin {
 }
 
 
+// Setup function for initializing game environment and spawning objects
 function setup() {
-  bg = loadImage("Tools/space shooter background.png");
   createCanvas(1500, 1000);
   spaceCraft.resize(spacex, spacey); 
   x = width/2 - spacex/2;
   noCursor();
+  
 
-  //Spawning or pushing the enemies
+  // Spawn enemies
   for (let i = 0; i < enemyTypes.length; i++) {
-    let enemySize = enemySizes[i]; // Get size from enemySizes array
-    let enemyType = enemyTypes[i]; // Get type from enemyTypes array
+    let enemySize = enemySizes[i];
+    let enemyType = enemyTypes[i];
     let enemy = new Enemy(random(60, width -60), random(-1200, 0), loadImage("Tools/" + enemyType + ".png"), enemySize, enemyType);
     enemies.push(enemy);
   }
 
-  //Initializing or spawning coins
+  // Spawn coins
   for (let i = 0; i < 5; i++) {
     let coinSize = 80
     let coin = new Coin(random(60, width -60), random(-1200, 0), coinImage, coinSize);
@@ -173,8 +186,6 @@ function setup() {
   }
 }
 
-// Define variables to store the state of the enemies and bullets when the game is paused.
-let savedStateEnemies, savedStateBullets, savedStateCoins;
 
 function toggleGamePlay() {
   // Toggle the gamePaused state
@@ -185,29 +196,24 @@ function toggleGamePlay() {
     // Stop the p5.js draw loop
     noLoop();
     
-    // Save the current state of each enemy in an array
+    // Save the current state of each enemy, bullets, and coins in an array
     savedStateEnemies = enemies.map(enemy => enemy.saveState());
-    
-    // Save the current state of each bullet in an array
     savedStateBullets = bullets.map(bullet => bullet.saveState());
-    
-    // Save the current state of each coin in an array
     savedStateCoins = coins.map(coin => coin.saveState());
+
   } else {
     // If the game is unpaused, restart the p5.js draw loop
     loop();
     
-    // Restore the state of each enemy from the saved states
+    // Restore the state of each enemy, bullets, and coins from the saved states
     for (let i = 0; i < enemies.length; i++) {
       Object.assign(enemies[i], savedStateEnemies[i]);
     }
-    
-    // Restore the state of each bullet from the saved states
+
     for (let i = 0; i < bullets.length; i++) {
       Object.assign(bullets[i], savedStateBullets[i]);
     }
     
-    // Restore the state of each coin from the saved states
     for (let i = 0; i < coins.length; i++) {
       Object.assign(coins[i], savedStateCoins[i]);
     }
@@ -217,89 +223,119 @@ function toggleGamePlay() {
 
 
 function draw() {
+  // Game state handling
+  if(gamePaused){
+    return;
+  }
+
+  // Setting up background and game interface
+  background(bg);
   textSize(28);
   textStyle(BOLD);
   stroke(100);
-  background(bg);
   fill(0);
   rectMode(CENTER);
+
+  // Draw and move the spaceCraft
   moveCraft();
   stroke(226, 204, 0);
   image(spaceCraft, x, height - 155);
+  spaceCraftBoundaries();
 
-  if(gamePaused){
-    return;
-    
+  // Call functions
+  bulltsSpawn();
+  bulletVsEnemies();
+  bulletVsCoins();
+  enemiesUpdate();
+  coinsUpdate();
+  drawCoins();
+  coinsVsSpacecraft();
+  collisions();
+  scoreDisplay();
+}
+
+
+//The controls of the spacecraft and moving it horizontally
+function moveCraft() {
+if(gamePaused){
+  return;
+}
+
+if (keyIsDown(68) || keyIsDown(39)) { //d or right arrow
+  x += 5;
+}
+
+if (keyIsDown(65) || keyIsDown(37)) { //a or left arrow
+  x -= 5;
+}
+}
+
+function spaceCraftBoundaries(){
+if (x <= 0) {
+  x = 0;
+}
+
+if (x >= width - spacex) {
+  x = width - spacex;
+}
+}
+
+
+//For firing the bullets out of the tip of the spacecraft
+function mousePressed() {
+let bulletx = x + spacex / 2 - 5;  // To align with the center of the spacecraft horizontally
+let bullety = height - spacey - 157;  // Set the bullet's y-position to be at the spacecraft's y-position
+let bullet = {
+  x: bulletx,
+  y: bullety,
+  size: 10,
+  saveState: function() {
+    return {
+      x: this.x,
+      y: this.y,
+      size: this.size
+    };
   }
+};
+bullets.push(bullet);
+}
 
-  //Spawning bullets
-  for (let bullet of bullets) {
-    bullet.y -= 10;
-    image(bulletImage, bullet.x, bullet.y, 10)
-    if (bullet.y < 0) {
-      bullets.splice(bullets.indexOf(bullet), 1);
-    }
+
+//Deals with all keys orders (pausin/resuming, refreshing, firing bullets)
+function keyPressed() {
+if (keyCode === 32) { // the number 32 refers to the ASCII code for the space bar
+  let bulletx = x + spacex / 2 - 5; // To align with the center of the spacecraft horizontally
+  let bullety = height - spacey - 157; // Set the bullet's y-position to be at the spacecraft's y-position
+  let bullet = {
+    x: bulletx,
+    y: bullety,
+    size: 10,
+  };
+  bullets.push(bullet);
+} 
+else if (keyCode === 27) { // the number 27 refers to the ASCII code for the ESC button
+  toggleGamePlay();
+}
+else if (key === 'r' || key === 'R') { // the 'r' or 'R' key for refresh
+  window.location.reload();
+}
+}
+
+
+function bulltsSpawn(){
+//Spawning bullets
+for (let bullet of bullets) {
+  bullet.y -= 10;
+  image(bulletImage, bullet.x, bullet.y, 10)
+  if (bullet.y < 0) {
+    bullets.splice(bullets.indexOf(bullet), 1);
   }
-
-  //Updating the coins' positions
-  for (let coin of coins) {
-    coin.draw();
-    if (coin.isOffScreen()) {
-      coin.reset();
-    }
-  }
-
-  //Managing the enemies' presence and position in the game
-  for (let i = enemies.length - 1; i >= 0; i--) {
-    enemies[i].draw();
-    if (enemies[i].isOffScreen()) {
-      enemies[i].reset();
-    }
-  }
-
-  // Bullet collisions with coins
-  for (let i = coins.length - 1; i >= 0; i--) {
-    for (let j = bullets.length - 1; j >= 0; j--) {
-      if (coins[i].collidesWith(bullets[j])) {
-        coins[i].reset();
-        bullets.splice(j, 1);
-        coinsCollected++;
-      }
-    }
-  }
+}
+}
 
 
-  // Coins collision with spacecraft
-  for (let i = coins.length - 1; i >= 0; i--) {
-    if (coins[i].collidesWithSpacecraft(x, height - spacey, spacex, spacey)) {
-      coins[i].reset();
-      coinsCollected++;
-    }
-  }
-
-  //Manages score and enemies collisions with spaceCraft
-  for (let enemy of enemies) {
-    if (enemy.collidesWithSpacecraft(x, height - spacey, spacex, spacey)) {
-      fill(225);
-      text("Game Over!", width/2 - 53, 60);
-      text("Your score was" + " " + score, width/2 - 94, 100);
-      if (score > highScore) {
-        highScore = score;
-        localStorage.setItem('highScore', highScore);
-      }
-      text("The highest score is: " + highScore, width/2 - 94, 140);
-      score = " ";
-      noLoop();
-    }
-  }
-  
-  // Drawing the coin counter
-  image(coinImage, width - 103, 9, 60, 60);
-  fill(225);
-  text(coinsCollected, width - 50, 48);
-
-
-  // Bullet collisions with enemies
+// Bullet collisions with enemies
+function bulletVsEnemies(){
 for (let i = enemies.length - 1; i >= 0; i--) {
   for (let j = bullets.length - 1; j >= 0; j--) {
     if (enemies[i].collidesWith(bullets[j])) {
@@ -315,76 +351,84 @@ for (let i = enemies.length - 1; i >= 0; i--) {
     }
   }
 }
+}
 
-  
-  
+
+function coinsUpdate(){
+//Updating the coins' positions
+for (let coin of coins) {
+  coin.draw();
+  if (coin.isOffScreen()) {
+    coin.reset();
+  }
+}
+}
+
+function drawCoins(){
+// Drawing the coincounter
+image(coinImage, width - 103, 9, 60, 60);
+fill(225);
+text(coinsCollected, width - 50, 48);
+}
+
+function enemiesUpdate(){
+  //Managing the enemies' presence and position in the game
+  for (let i = enemies.length - 1; i >= 0; i--) {
+    enemies[i].draw();
+    if (enemies[i].isOffScreen()) {
+      enemies[i].reset();
+    }
+  }
+}
+
+
+function bulletVsCoins(){
+// Bullet collisions with coins
+for (let i = coins.length - 1; i >= 0; i--) {
+  for (let j = bullets.length - 1; j >= 0; j--) {
+    if (coins[i].collidesWith(bullets[j])) {
+      coins[i].reset();
+      bullets.splice(j, 1);
+      coinsCollected++;
+    }
+  }
+}
+}
+
+
+function coinsVsSpacecraft(){
+// Coins collision with spacecraft
+for (let i = coins.length - 1; i >= 0; i--) {
+  if (coins[i].collidesWithSpacecraft(x, height - spacey, spacex, spacey)) {
+    coins[i].reset();
+    coinsCollected++;
+  }
+}
+}
+
+
+function collisions(){
+//Manages score and enemies collisions with spaceCraft
+for (let enemy of enemies) {
+  if (enemy.collidesWithSpacecraft(x, height - spacey, spacex, spacey)) {
+    fill(225);
+    text("Game Over!", width/2 - 53, 60);
+    text("Your score was" + " " + score, width/2 - 94, 100);
+    if (score > highScore) {
+      highScore = score;
+      localStorage.setItem('highScore', highScore);
+    }
+    text("The highest score is: " + highScore, width/2 - 94, 140);
+    score = " ";
+    noLoop();
+  }
+}
+}
+
+
+//To display the score in the middle of the screen at the beginning of the game
+function scoreDisplay(){
   fill(225);
   text(score, width/2, 50);
-  
-  if (x <= 0) {
-    x = 0;
   }
   
-  if (x >= width - spacex) {
-    x = width - spacex;
-  }
-}
-
-//The controls of the spacecraft and moving it horizontally
-function moveCraft() {
-  if(gamePaused){
-    return;
-  }
-
-  if (keyIsDown(68) || keyIsDown(39)) { //d or right arrow
-    x += 5;
-  }
-
-  if (keyIsDown(65) || keyIsDown(37)) { //a or left arrow
-    x -= 5;
-  }
-}
-
-
-//For firing the bullets out of the tip of the spacecraft
-function mousePressed() {
-  let bulletx = x + spacex / 2 - 5;  // To align with the center of the spacecraft horizontally
-  let bullety = height - spacey - 157;  // Set the bullet's y-position to be at the spacecraft's y-position
-  let bullet = {
-    x: bulletx,
-    y: bullety,
-    size: 10,
-    saveState: function() {
-      return {
-        x: this.x,
-        y: this.y,
-        size: this.size
-      };
-    }
-  };
-  bullets.push(bullet);
-}
-
-
-//Deals with all keys orders (pausin/resuming, refreshing, firing bullets)
-function keyPressed() {
-  if (keyCode === 32) { // the number 32 refers to the ASCII code for the space bar
-    let bulletx = x + spacex / 2 - 5; // To align with the center of the spacecraft horizontally
-    let bullety = height - spacey - 157; // Set the bullet's y-position to be at the spacecraft's y-position
-    let bullet = {
-      x: bulletx,
-      y: bullety,
-      size: 10,
-    };
-    bullets.push(bullet);
-  } 
-  else if (keyCode === 27) { // the number 27 refers to the ASCII code for the ESC button
-    toggleGamePlay();
-  }
-  else if (key === 'r' || key === 'R') { // the 'r' or 'R' key for refresh
-    window.location.reload();
-  }
-}
-
-
-
